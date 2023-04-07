@@ -36,6 +36,6 @@ void OutputTxJSONx(const CTransaction& tx)
     TxToUnivXX(tx, /*block_hash=*/uint256(), entry);
 
 
-    std::string jsonOutput = entry.write(4);
+    std::string jsonOutput = entry.write(0);
     tfm::format(std::cout, "%s\n", jsonOutput);
 }

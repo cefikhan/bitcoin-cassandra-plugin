@@ -97,6 +97,255 @@ using node::SnapshotMetadata;
 using node::UndoReadFromDisk;
 using node::UnlinkPrunedFiles;
 
+
+
+
+
+
+
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "cassandra.h"
+
+struct Tx_ {
+  char* txhash;
+  char* sender;
+};
+
+
+typedef struct Tx_ Tx;
+
+void print_error(CassFuture* future) {
+  const char* message;
+  size_t message_length;
+  cass_future_error_message(future, &message, &message_length);
+  fprintf(stderr, "Error: %.*s\n", (int)message_length, message);
+}
+
+CassCluster* create_cluster(const char* hosts) {
+  CassCluster* cluster = cass_cluster_new();
+  cass_cluster_set_contact_points(cluster, hosts);
+  return cluster;
+}
+
+CassError connect_session(CassSession* session, const CassCluster* cluster) {
+  CassError rc = CASS_OK;
+  CassFuture* future = cass_session_connect(session, cluster);
+
+  cass_future_wait(future);
+  rc = cass_future_error_code(future);
+  if (rc != CASS_OK) {
+    print_error(future);
+  }
+  cass_future_free(future);
+
+  return rc;
+}
+
+CassError execute_query(CassSession* session, const char* query) {
+  CassError rc = CASS_OK;
+  CassFuture* future = NULL;
+  CassStatement* statement = cass_statement_new(query, 0);
+
+  future = cass_session_execute(session, statement);
+  cass_future_wait(future);
+
+  rc = cass_future_error_code(future);
+  if (rc != CASS_OK) {
+    print_error(future);
+  }
+
+  cass_future_free(future);
+  cass_statement_free(statement);
+
+  return rc;
+}
+
+CassError insert_into_basic(CassSession* session,const Tx* tx) {
+
+  CassError rc = CASS_OK;
+  CassStatement* statement = NULL;
+  CassFuture* future = NULL;
+  
+  const char* query =
+      "INSERT INTO bitcoinspace.transactions (txhash, sender) VALUES (?, ?);";
+  
+  statement = cass_statement_new(query, 2);
+
+  cass_statement_bind_string(statement, 0, tx->txhash);
+  cass_statement_bind_string(statement, 1, tx->sender);
+
+  future = cass_session_execute(session, statement);
+  cass_future_wait(future);
+
+  rc = cass_future_error_code(future);
+  if (rc != CASS_OK) {
+    print_error(future);
+  }
+
+  cass_future_free(future);
+  cass_statement_free(statement);
+
+  return rc;
+}
+
+
+
+
+
+
+
+
+
+
+void callme(char* k) {
+
+
+
+  // int main(){
+  CassCluster* cluster = NULL;
+  CassSession* session = cass_session_new();
+  char* hosts = "127.0.0.1";
+
+  Tx input = {k,"sakj" };
+
+
+  // if (argc > 1) {
+  //   hosts = argv[1];
+  // }
+  cluster = create_cluster(hosts);
+
+  if (connect_session(session, cluster) != CASS_OK) {
+    cass_cluster_free(cluster);
+    cass_session_free(session);
+
+  }
+
+  insert_into_basic(session,&input);
+
+  cass_session_free(session);
+  cass_cluster_free(cluster);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//connecting cassandra
+// #include <assert.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <string.h>
+
+// #include "cassandra.h"
+
+// struct Tx_ {
+//   char* txhash;
+//   char* sender;
+// };
+
+
+// typedef struct Tx_ Tx;
+
+// void print_error(CassFuture* future) {
+//   const char* message;
+//   size_t message_length;
+//   cass_future_error_message(future, &message, &message_length);
+//   fprintf(stderr, "Error: %.*s\n", (int)message_length, message);
+// }
+
+// CassCluster* create_cluster(const char* hosts) {
+//   CassCluster* cluster = cass_cluster_new();
+//   cass_cluster_set_contact_points(cluster, hosts);
+//   return cluster;
+// }
+
+// CassError connect_session(CassSession* session, const CassCluster* cluster) {
+//   CassError rc = CASS_OK;
+//   CassFuture* future = cass_session_connect(session, cluster);
+
+//   cass_future_wait(future);
+//   rc = cass_future_error_code(future);
+//   if (rc != CASS_OK) {
+//     print_error(future);
+//   }
+//   cass_future_free(future);
+
+//   return rc;
+// }
+
+// CassError execute_query(CassSession* session, const char* query) {
+//   CassError rc = CASS_OK;
+//   CassFuture* future = NULL;
+//   CassStatement* statement = cass_statement_new(query, 0);
+
+//   future = cass_session_execute(session, statement);
+//   cass_future_wait(future);
+
+//   rc = cass_future_error_code(future);
+//   if (rc != CASS_OK) {
+//     print_error(future);
+//   }
+
+//   cass_future_free(future);
+//   cass_statement_free(statement);
+
+//   return rc;
+// }
+
+// CassError insert_into_basic(CassSession* session,const Tx* tx) {
+
+//   CassError rc = CASS_OK;
+//   CassStatement* statement = NULL;
+//   CassFuture* future = NULL;
+  
+//   const char* query =
+//       "INSERT INTO bitcoinspace.transactions (txhash, sender) VALUES (?, ?);";
+  
+//   statement = cass_statement_new(query, 2);
+
+//   cass_statement_bind_string(statement, 0, tx->txhash);
+//   cass_statement_bind_string(statement, 1, tx->sender);
+
+//   future = cass_session_execute(session, statement);
+//   cass_future_wait(future);
+
+//   rc = cass_future_error_code(future);
+//   if (rc != CASS_OK) {
+//     print_error(future);
+//   }
+
+//   cass_future_free(future);
+//   cass_statement_free(statement);
+
+//   return rc;
+// }
+
+
+// Cassandra connection 
+
+
+
+
 /** Maximum kilobytes for transactions to store for processing during reorg */
 static const unsigned int MAX_DISCONNECTED_TX_POOL_SIZE = 20000;
 /** Time to wait between writing blocks/block index to disk. */
@@ -2246,12 +2495,27 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     for (unsigned int i = 0; i < block.vtx.size(); i++)
     {
         const CTransaction &tx = *(block.vtx[i]);
-        
 
         
-
-
         std::cout<<"CALLING OUTPUTTXJSON NOW --->>>> "<<std::endl;
+
+        UniValue myUniValue(UniValue::VOBJ);    
+        myUniValue.pushKV("",tx.GetHash().GetHex());
+        std::string jsonOutput = myUniValue.write(0);
+        int lastIndex = jsonOutput.size()-7;
+        std::string jsnOutput = jsonOutput.substr(5,lastIndex);
+        char* c = const_cast<char*>(jsnOutput.c_str());
+
+
+ 
+
+
+
+
+
+
+        callme(c);
+        
         OutputTxJSONx(tx);
 
         // std::cout<<"Calling vtx in loop tx.ToString() for each block NOOOOOWWWW --->>><<<------"<<std::endl;
