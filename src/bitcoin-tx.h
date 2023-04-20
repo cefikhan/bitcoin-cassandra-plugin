@@ -27,13 +27,23 @@
 #include <cstdio>
 #include <functional>
 #include <memory>
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "cassandra.h"
 
-void OutputTxJSONx(const CTransaction& tx)
+
+
+
+
+
+ 
+void OutputTxJSONx(const CTransaction& tx,CassUserType* ScriptSigSimple_type ,CassUserType* vinTypeSimple_type  )
 {
     std::cout<<"OUTPUTTXJSON CALLED FROM INSIDE "<<std::endl;
     UniValue entry(UniValue::VOBJ);
-    // TxToUniv(tx, /*block_hash=*/uint256(), entry);
-    TxToUnivXX(tx, /*block_hash=*/uint256(), entry);
+    TxToUnivXX(ScriptSigSimple_type, vinTypeSimple_type, tx, /*block_hash=*/uint256(), entry);
 
 
     std::string jsonOutput = entry.write(0);

@@ -9,6 +9,8 @@
 
 #include <string>
 #include <vector>
+#include "cassandra.h"
+
 
 class CBlock;
 class CBlockHeader;
@@ -19,6 +21,21 @@ class SigningProvider;
 class uint256;
 class UniValue;
 class CTxUndo;
+
+
+
+
+struct collectionsStruct{
+        CassCollection* collection ;
+        CassCollection* vinCollection ;
+        std::string id;
+        std::string size;
+        std::string version;
+        std::string vsize;
+        std::string weight;
+        std::string locktime;
+        std::string hex;
+};
 
 /**
  * Verbose level for block's transaction
@@ -55,7 +72,7 @@ std::string EncodeHexTx(const CTransaction& tx, const int serializeFlags = 0);
 std::string SighashToStr(unsigned char sighash_type);
 void ScriptToUniv(const CScript& script, UniValue& out, bool include_hex = true, bool include_address = false, const SigningProvider* provider = nullptr);
 void TxToUniv(const CTransaction& tx, const uint256& block_hash, UniValue& entry, bool include_hex = true, int serialize_flags = 0, const CTxUndo* txundo = nullptr, TxVerbosity verbosity = TxVerbosity::SHOW_DETAILS);
-void TxToUnivXX(const CTransaction& tx, const uint256& block_hash, UniValue& entry, bool include_hex = true, int serialize_flags = 0, const CTxUndo* txundo = nullptr, TxVerbosity verbosity = TxVerbosity::SHOW_DETAILS);
+collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUserType* vinTypeSimple_type ,const CTransaction& tx, const uint256& block_hash, UniValue& entry, bool include_hex = true, int serialize_flags = 0, const CTxUndo* txundo = nullptr, TxVerbosity verbosity = TxVerbosity::SHOW_DETAILS);
 void TxToUnivAF(const CTransaction& tx, const uint256& block_hash, UniValue& entry, bool include_hex = true, int serialize_flags = 0, const CTxUndo* txundo = nullptr, TxVerbosity verbosity = TxVerbosity::SHOW_DETAILS);
 void ScriptToUnivAF(const CScript& script, UniValue& out, bool include_hex = true, bool include_address = false, const SigningProvider* provider = nullptr);
 void ScriptToUnivXX(const CScript& script, UniValue& out, bool include_hex = true, bool include_address = false, const SigningProvider* provider = nullptr);

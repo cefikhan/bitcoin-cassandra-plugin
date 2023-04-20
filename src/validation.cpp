@@ -116,7 +116,40 @@ struct Tx_ {
 };
 
 
+struct vinType{
+  char* txid;
+  char* vout ;
+  char* scriptSig ;
+  char* sequence;
+};
+
+
+struct Txc_ {
+  char* txid;
+  char* hash;
+  char* version;
+  char* size;
+  char* vsize;
+  char* weight;
+  char* locktime;
+
+  vinType* vin;
+
+
+};
+
 typedef struct Tx_ Tx;
+
+
+const CassSchemaMeta* bschema_meta;
+
+
+
+
+
+
+
+
 
 void print_error(CassFuture* future) {
   const char* message;
@@ -193,7 +226,163 @@ CassError insert_into_basic(CassSession* session,const Tx* tx) {
 }
 
 
+CassError insert_into_udt(CassSession* session) {
+  CassError rc = CASS_OK;
+  CassStatement* bstatement = NULL;
+  CassFuture* future = NULL;
 
+  const CassKeyspaceMeta* bkeyspace_meta = NULL;
+
+  //for bitcoinspace 
+  const CassDataType* scriptPubKeyTypeSimple = NULL;
+  const CassDataType* voutTypeSimple = NULL;
+
+
+  const CassDataType* ScriptSigSimple = NULL;
+  const CassDataType* vinTypeSimple = NULL;
+
+
+  const char* bquery = "INSERT INTO bitcoinspace.transactionssimple (txid,version,size,vsize,weight,locktime,hex,senderAddress ,vout, vin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+
+  bstatement = cass_statement_new(bquery, 10);
+
+  //CassKeyspaceMeta                                  CassSchemaMeta
+  bkeyspace_meta = cass_schema_meta_keyspace_by_name(bschema_meta, "bitcoinspace");
+  if (bkeyspace_meta != NULL) {
+    scriptPubKeyTypeSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "scriptpubkeytypesimple");
+    voutTypeSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "vouttypesimple");
+
+    //User types for vinTypeSimple
+    vinTypeSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "vintypesimple");
+    ScriptSigSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "scriptsigsimple");
+  }
+
+
+  if (scriptPubKeyTypeSimple != NULL && voutTypeSimple != NULL && ScriptSigSimple !=NULL && vinTypeSimple!=NULL) {
+    int i;
+
+    //FOR BITCOINSPACE transactionsSimple
+
+
+
+
+    // Create a user-defined type for the scriptPubKeyTypeSimple
+    CassUserType* scriptpubkey_type = cass_user_type_new_from_data_type(scriptPubKeyTypeSimple);
+    //Create a user-defined type for voutTypeSimple
+    CassUserType* voutTypeSimple_type = cass_user_type_new_from_data_type(voutTypeSimple);
+  
+
+
+
+    // Create a user-defined type for the scriptPubKeyTypeSimple
+    CassUserType* ScriptSigSimple_type = cass_user_type_new_from_data_type(ScriptSigSimple);
+    //Create a user-defined type for voutTypeSimple
+    CassUserType* vinTypeSimple_type = cass_user_type_new_from_data_type(vinTypeSimple);
+
+
+
+//START FROM HERE
+
+    //setting values of scriptPubKeyTypeSimple
+    cass_user_type_set_string_by_name(scriptpubkey_type,"asm","fsj");
+    cass_user_type_set_string_by_name(scriptpubkey_type,"des","4829");
+    cass_user_type_set_string_by_name(scriptpubkey_type,"hex","s4829i");
+    cass_user_type_set_string_by_name(scriptpubkey_type,"address","s4829i");
+    cass_user_type_set_string_by_name(scriptpubkey_type,"type","s4829i");
+
+    //values of scriptpubkey_type set 
+    cass_user_type_set_string_by_name(voutTypeSimple_type, "value", "ds");
+    cass_user_type_set_string_by_name(voutTypeSimple_type, "n", "ds");
+    cass_user_type_set_user_type_by_name(voutTypeSimple_type, "scriptpubkey", scriptpubkey_type);
+
+    //Setting values of scriptSigSimple
+    cass_user_type_set_string_by_name(ScriptSigSimple_type,"asm","Script asm");
+    cass_user_type_set_string_by_name(ScriptSigSimple_type,"hex","xaesh");
+
+    //setting values of vinTypeSimple
+    cass_user_type_set_string_by_name(vinTypeSimple_type,"txid","xs4829ds");
+    cass_user_type_set_string_by_name(vinTypeSimple_type,"vout","de");
+    cass_user_type_set_string_by_name(vinTypeSimple_type,"sequence","dsf");
+    cass_user_type_set_user_type_by_name(vinTypeSimple_type, "scriptsig", ScriptSigSimple_type);
+
+    //making array of voutTypeSimple for vout
+    CassCollection* collection = NULL;
+    collection = cass_collection_new(CASS_COLLECTION_TYPE_LIST, 3);
+      for (i = 0; i<2; i++) {
+            cass_collection_append_user_type(collection, voutTypeSimple_type);
+     }
+
+    //  cass_statement_bind_collection(bstatement, 2, collection);
+
+
+    //making array of vintypeSimple for vin
+    CassCollection* vinCollection = NULL;
+    vinCollection = cass_collection_new(CASS_COLLECTION_TYPE_LIST,4);
+    for(i=0;i<2;i++){
+      cass_collection_append_user_type(vinCollection,vinTypeSimple_type);
+    }
+   
+   cass_statement_bind_collection(bstatement, 1, vinCollection);
+
+
+   CassCollection* senderCollection = NULL;
+
+   senderCollection = cass_collection_new(CASS_COLLECTION_TYPE_LIST, 2); 
+   for (i=0;i<2;i++) {
+     cass_collection_append_string(senderCollection, "huehf4829cjdsk");
+   }
+
+
+
+
+    cass_statement_bind_string(bstatement, 0, "id4829");
+    cass_statement_bind_string(bstatement, 1, "vers4829");
+    cass_statement_bind_string(bstatement, 2, "size4829");
+    cass_statement_bind_string(bstatement, 3, "vsize4829");
+    cass_statement_bind_string(bstatement, 4, "weight4829");
+    cass_statement_bind_string(bstatement, 5, "locktime4829");
+    cass_statement_bind_string(bstatement, 6, "hex4829");
+
+
+
+
+
+
+    cass_statement_bind_collection(bstatement, 7, senderCollection);
+    cass_statement_bind_collection(bstatement, 8, collection);
+    cass_statement_bind_collection(bstatement, 9, vinCollection);
+ 
+   
+
+
+
+    cass_collection_free(collection);
+    cass_collection_free(vinCollection);
+
+
+    future = cass_session_execute(session, bstatement);
+    cass_future_wait(future);
+
+    rc = cass_future_error_code(future);
+    if (rc != CASS_OK) {
+      print_error(future);
+    }
+
+    cass_future_free(future);
+    cass_user_type_free(scriptpubkey_type);
+    cass_user_type_free(voutTypeSimple_type);
+
+
+    cass_user_type_free(ScriptSigSimple_type);
+    cass_user_type_free(vinTypeSimple_type);
+
+  }
+
+  cass_statement_free(bstatement);
+
+  return rc;
+}
 
 
 
@@ -210,7 +399,7 @@ void callme(char* k) {
   CassSession* session = cass_session_new();
   char* hosts = "127.0.0.1";
 
-  Tx input = {k,"sakj" };
+//   Tx input = {k,"sakj" };
 
 
   // if (argc > 1) {
@@ -223,125 +412,16 @@ void callme(char* k) {
     cass_session_free(session);
 
   }
+  bschema_meta = cass_session_get_schema_meta(session);
 
-  insert_into_basic(session,&input);
-
+//   insert_into_basic(session,&input);
+  insert_into_udt(session);
   cass_session_free(session);
   cass_cluster_free(cluster);
+  cass_schema_meta_free(bschema_meta);
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//connecting cassandra
-// #include <assert.h>
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <string.h>
-
-// #include "cassandra.h"
-
-// struct Tx_ {
-//   char* txhash;
-//   char* sender;
-// };
-
-
-// typedef struct Tx_ Tx;
-
-// void print_error(CassFuture* future) {
-//   const char* message;
-//   size_t message_length;
-//   cass_future_error_message(future, &message, &message_length);
-//   fprintf(stderr, "Error: %.*s\n", (int)message_length, message);
-// }
-
-// CassCluster* create_cluster(const char* hosts) {
-//   CassCluster* cluster = cass_cluster_new();
-//   cass_cluster_set_contact_points(cluster, hosts);
-//   return cluster;
-// }
-
-// CassError connect_session(CassSession* session, const CassCluster* cluster) {
-//   CassError rc = CASS_OK;
-//   CassFuture* future = cass_session_connect(session, cluster);
-
-//   cass_future_wait(future);
-//   rc = cass_future_error_code(future);
-//   if (rc != CASS_OK) {
-//     print_error(future);
-//   }
-//   cass_future_free(future);
-
-//   return rc;
-// }
-
-// CassError execute_query(CassSession* session, const char* query) {
-//   CassError rc = CASS_OK;
-//   CassFuture* future = NULL;
-//   CassStatement* statement = cass_statement_new(query, 0);
-
-//   future = cass_session_execute(session, statement);
-//   cass_future_wait(future);
-
-//   rc = cass_future_error_code(future);
-//   if (rc != CASS_OK) {
-//     print_error(future);
-//   }
-
-//   cass_future_free(future);
-//   cass_statement_free(statement);
-
-//   return rc;
-// }
-
-// CassError insert_into_basic(CassSession* session,const Tx* tx) {
-
-//   CassError rc = CASS_OK;
-//   CassStatement* statement = NULL;
-//   CassFuture* future = NULL;
-  
-//   const char* query =
-//       "INSERT INTO bitcoinspace.transactions (txhash, sender) VALUES (?, ?);";
-  
-//   statement = cass_statement_new(query, 2);
-
-//   cass_statement_bind_string(statement, 0, tx->txhash);
-//   cass_statement_bind_string(statement, 1, tx->sender);
-
-//   future = cass_session_execute(session, statement);
-//   cass_future_wait(future);
-
-//   rc = cass_future_error_code(future);
-//   if (rc != CASS_OK) {
-//     print_error(future);
-//   }
-
-//   cass_future_free(future);
-//   cass_statement_free(statement);
-
-//   return rc;
-// }
-
-
-// Cassandra connection 
 
 
 
@@ -2487,6 +2567,120 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     CCheckQueueControl<CScriptCheck> control(fScriptChecks && parallel_script_checks ? &scriptcheckqueue : nullptr);
     std::vector<PrecomputedTransactionData> txsdata(block.vtx.size());
 
+    //CASSANDRA CODE _______------___---____----___----___-----____-----_________----___--_--_--_-___--__-__--___----___________
+
+
+
+  CassCluster* cluster = NULL;
+  CassSession* session = cass_session_new();
+  char* hosts = "127.0.0.1";
+  cluster = create_cluster(hosts);
+
+  if(connect_session(session, cluster) != CASS_OK) {
+    cass_cluster_free(cluster);
+    cass_session_free(session);
+    return -1;
+  }
+
+    //insert logic implemented here
+  CassError rc = CASS_OK;
+  CassStatement* bstatement = NULL;
+  CassFuture* future = NULL;
+
+  const CassKeyspaceMeta* bkeyspace_meta = NULL;
+
+  //for bitcoinspace 
+  const CassDataType* scriptPubKeyTypeSimple = NULL;
+  const CassDataType* voutTypeSimple = NULL;
+
+
+  const CassDataType* ScriptSigSimple = NULL;
+  const CassDataType* vinTypeSimple = NULL;
+
+
+  const char* bquery = "INSERT INTO bitcoinspace.transactionssimple (txid,version,size,vsize,weight,locktime,hex,senderAddress ,vout, vin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+
+  bstatement = cass_statement_new(bquery, 10);
+  bschema_meta = cass_session_get_schema_meta(session);
+
+//   //CassKeyspaceMeta                                  CassSchemaMeta
+     bkeyspace_meta = cass_schema_meta_keyspace_by_name(bschema_meta, "bitcoinspace");
+  if (bkeyspace_meta != NULL) {
+    scriptPubKeyTypeSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "scriptpubkeytypesimple");
+    voutTypeSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "vouttypesimple");
+
+    //User types for vinTypeSimple
+    vinTypeSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "vintypesimple");
+    ScriptSigSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "scriptsigsimple");
+  }
+
+
+    // Create a user-defined type for the scriptPubKeyTypeSimple
+    CassUserType* scriptpubkey_type = cass_user_type_new_from_data_type(scriptPubKeyTypeSimple);
+    //Create a user-defined type for voutTypeSimple
+    CassUserType* voutTypeSimple_type = cass_user_type_new_from_data_type(voutTypeSimple);
+
+
+    // Create a user-defined type for the scriptPubKeyTypeSimple
+    CassUserType* ScriptSigSimple_type = cass_user_type_new_from_data_type(ScriptSigSimple);
+    //Create a user-defined type for voutTypeSimple
+    CassUserType* vinTypeSimple_type = cass_user_type_new_from_data_type(vinTypeSimple);
+
+
+    //making array of voutTypeSimple for vout
+    CassCollection* collection = NULL;
+
+
+
+    //Now we will pass collection and voutTypeSimple_type
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // cass_user_type_free(scriptpubkey_type);
+    // cass_user_type_free(voutTypeSimple_type);
+
+    // cass_user_type_free(ScriptSigSimple_type);
+    // cass_user_type_free(vinTypeSimple_type);
+
+
+    //cassandra code till here
+
+
+
+
+
+
+
     std::vector<int> prevheights;
     CAmount nFees = 0;
     int nInputs = 0;
@@ -2498,26 +2692,27 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
 
         
         std::cout<<"CALLING OUTPUTTXJSON NOW --->>>> "<<std::endl;
-
+        
         UniValue myUniValue(UniValue::VOBJ);    
         myUniValue.pushKV("",tx.GetHash().GetHex());
         std::string jsonOutput = myUniValue.write(0);
         int lastIndex = jsonOutput.size()-7;
         std::string jsnOutput = jsonOutput.substr(5,lastIndex);
-        char* c = const_cast<char*>(jsnOutput.c_str());
+        char* txhashC = const_cast<char*>(jsnOutput.c_str());
 
 
- 
-
-
-
-
-
-
-        callme(c);
         
-        OutputTxJSONx(tx);
 
+        //OutputTxJsonx gives us all the details about transactions except sender address
+        //we will pass collection and voutTypeSimple_type
+
+
+
+        OutputTxJSONx(tx,ScriptSigSimple_type,vinTypeSimple_type);
+
+        // callme(txhashC);
+        
+    
         // std::cout<<"Calling vtx in loop tx.ToString() for each block NOOOOOWWWW --->>><<<------"<<std::endl;
         // std::cout<<tx.ToString()  <<std::endl;
         // std::cout<<"Hash : ";    
@@ -2557,8 +2752,8 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
 
 
 
-            // const COutPoint& prevout = vin.prevout;
-            //const  CScript& ScriptSig = vin.scriptSig;
+        // const COutPoint& prevout = vin.prevout;
+        //const  CScript& ScriptSig = vin.scriptSig;
 
 
 
@@ -2776,6 +2971,24 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         nSigOpsCost,
         time_5 - time_start // in microseconds (µs)
     );
+
+    //Cassandra code 
+//   cass_cluster_free(cluster);
+//   cass_session_free(session);
+
+//   cass_schema_meta_free(bschema_meta);
+  //till here
+
+  
+
+  cass_cluster_free(cluster);
+  cass_session_free(session);
+  cass_schema_meta_free(bschema_meta);
+
+
+
+
+
 
     return true;
 }
