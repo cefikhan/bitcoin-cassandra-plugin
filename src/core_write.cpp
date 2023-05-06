@@ -274,9 +274,17 @@ void TxToUniv(const CTransaction& tx, const uint256& block_hash, UniValue& entry
 
 
 //CUSTOMIZED CODE
-void TxToUnivAF(const CTransaction& tx, const uint256& block_hash, UniValue& entry, bool include_hex, int serialize_flags, const CTxUndo* txundo, TxVerbosity verbosity)
+std::string TxToUnivAF(const CTransaction& tx,uint32_t nx ,const uint256& block_hash, UniValue& entry, bool include_hex, int serialize_flags, const CTxUndo* txundo, TxVerbosity verbosity)
 {
     CHECK_NONFATAL(verbosity >= TxVerbosity::SHOW_DETAILS);
+    std::string addresxxAF ;
+
+    // for (i=0;i<2;i++) {
+    //  cass_collection_append_string(senderCollection, "huehf4829cjdsk");
+    // }
+
+
+
 
     // entry.pushKV("txid", tx.GetHash().GetHex());
     // entry.pushKV("hash", tx.GetWitnessHash().GetHex());
@@ -346,6 +354,7 @@ void TxToUnivAF(const CTransaction& tx, const uint256& block_hash, UniValue& ent
 
     UniValue vout(UniValue::VARR);
     for (unsigned int i = 0; i < tx.vout.size(); i++) {
+        if(i==nx){
         const CTxOut& txout = tx.vout[i];
 
         UniValue out(UniValue::VOBJ);
@@ -354,15 +363,14 @@ void TxToUnivAF(const CTransaction& tx, const uint256& block_hash, UniValue& ent
         // out.pushKV("n", (int64_t)i);
 
         UniValue o(UniValue::VOBJ);
-        ScriptToUnivAF(txout.scriptPubKey, /*out=*/o, /*include_hex=*/true, /*include_address=*/true);
+        addresxxAF =  ScriptToUnivAF(txout.scriptPubKey, /*out=*/o, /*include_hex=*/true, /*include_address=*/true);
         out.pushKV("Sender Address", o);
         vout.push_back(out);
+        }
 
-        // if (have_undo) {
-        //     amt_total_out += txout.nValue;
-        // }
     }
     entry.pushKV("vout", vout);
+    return addresxxAF;
 
     // if (have_undo) {
     //     const CAmount fee = amt_total_in - amt_total_out;
@@ -384,13 +392,15 @@ void TxToUnivAF(const CTransaction& tx, const uint256& block_hash, UniValue& ent
 
 
 //CUSTOMIZED CODE
-struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUserType* vinTypeSimple_type ,const CTransaction& tx, const uint256& block_hash, UniValue& entry, bool include_hex, int serialize_flags, const CTxUndo* txundo, TxVerbosity verbosity)
+struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUserType* vinTypeSimple_type , CassUserType* scriptpubkey_type, CassUserType* voutTypeSimple_type , const CTransaction& tx, const uint256& block_hash, UniValue& entry, bool include_hex, int serialize_flags, const CTxUndo* txundo, TxVerbosity verbosity)
 {
     CHECK_NONFATAL(verbosity >= TxVerbosity::SHOW_DETAILS);
 
     struct collectionsStruct s1;
 
     UniValue myUniValue(UniValue::VOBJ);
+    //std::string jsonOutput 
+    //int lastIndex
 
 
     entry.pushKV("txid", tx.GetHash().GetHex());
@@ -453,13 +463,6 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
     lastIndex = jsonOutput.size()-5;
     s1.weight = jsonOutput.substr(4,lastIndex);
 
-
-
-
-
-
-
-
     entry.pushKV("locktime", (int64_t)tx.nLockTime);
    //Cassandra
     myUniValue.pushKV("",(int64_t)tx.nLockTime);
@@ -468,18 +471,7 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
     s1.locktime = jsonOutput.substr(4,lastIndex);
 
 
-
-
-
-
-
-
-
-
-
-
     UniValue vin{UniValue::VARR};
-
     // If available, use Undo data to calculate the fee. Note that txundo == nullptr
     // for coinbase transactions and for transactions where undo data is unavailable.
     const bool have_undo = txundo != nullptr;
@@ -495,6 +487,14 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
     // }
 
 
+    //making array of voutTypeSimple for vout
+    CassCollection* collection = NULL;
+    collection = cass_collection_new(CASS_COLLECTION_TYPE_LIST, 3);
+    //   for (i = 0; i<2; i++) {
+    //         cass_collection_append_user_type(collection, voutTypeSimple_type);
+    //  }
+
+
 
 
 
@@ -508,67 +508,50 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
             //Cassandra
             myUniValue.pushKV("", txin.prevout.hash.GetHex());
             jsonOutput = myUniValue.write(0);
-            std::cout<<"TXID OF VIN ---->>>>>>Cxxxx "<<std::endl;
-            std::cout<<jsonOutput<<std::endl;
-            int lastIndex = jsonOutput.size()-7;
+            lastIndex = jsonOutput.size()-7;
             std::string txidvin = jsonOutput.substr(5,lastIndex);
             // {"":"654b0a695cb0926bd15b967e4825dbb268a8ab831457a55e009509f85fae9617"}
-
-
-
-
-
 
             in.pushKV("vout", (int64_t)txin.prevout.n);
             //Cassandra
             myUniValue.pushKV("", (int64_t)txin.prevout.n);
             jsonOutput = myUniValue.write(0);
-            std::cout<<"VOUT OF VIN ---->>>>>>Cxxxx "<<std::endl;
-            std::cout<<jsonOutput<<std::endl;
+            lastIndex = jsonOutput.size()-5;
+            std::string voutin = jsonOutput.substr(4,lastIndex);
             //{"":0}
-      
             
             UniValue o(UniValue::VOBJ);
             o.pushKV("asm", ScriptToAsmStr(txin.scriptSig, true));
-
-               //Cassandra
-    myUniValue.pushKV("",ScriptToAsmStr(txin.scriptSig, true));
-    jsonOutput = myUniValue.write(0);
-        std::cout<<"ASM ---->>>>>>Cxxxx "<<std::endl;
-    std::cout<<jsonOutput<<std::endl;
-            
-    // {"":"3045022016c645930581b7f56bdec567eaa59432f2d84219de6feb55b0660d7e8a1994a9022100f1a401030e1b05e011bc86baa86d27d13572ceec53fc41203f809bbef662706e[ALL] 040d0350822e59c96139822b360b3a305a0942e3450cc35857e39c51c8982ce4b315671e3d20333fed23c18da5b1afd37b6e64f3fa2ca8a36e837df5c91251df90"}
-
+            //Cassandra
+            myUniValue.pushKV("",ScriptToAsmStr(txin.scriptSig, true));
+            jsonOutput = myUniValue.write(0);
+            lastIndex = jsonOutput.size()-7;
+            std::string asmvin = jsonOutput.substr(5,lastIndex);
+            // {"":"3045022016c645930581b7f56bdec567eaa59432f2d84219de6feb55b0660d7e8a1994a9022100f1a401030e1b05e011bc86baa86d27d13572ceec53fc41203f809bbef662706e[ALL] 040d0350822e59c96139822b360b3a305a0942e3450cc35857e39c51c8982ce4b315671e3d20333fed23c18da5b1afd37b6e64f3fa2ca8a36e837df5c91251df90"}
 
 
 
             o.pushKV("hex", HexStr(txin.scriptSig));
+            //Cassandra
+            myUniValue.pushKV("",HexStr(txin.scriptSig));
+            jsonOutput = myUniValue.write(0);
+            std::cout<<"Hex ---->>>>>>Cxxxx "<<std::endl;
+            std::cout<<jsonOutput<<std::endl;
+            lastIndex = jsonOutput.size()-7;
+            std::string HexIn = jsonOutput.substr(5,lastIndex);
+            //{"":"483045022100828d4169ac0ab22d4af292cd391ee626cc90a9f7adf90f8dc715d42e4c3811fe02205526274bdd94b6649f06bee7e61348e2f3b023f1ba38b94bfea4464468bf3a3a014104a39b9e4fbd213ef24bb9be69de4a118dd0644082e47c01fd9159d38637b83fbcdc115a5d6e970586a012d1cfe3e3a8b1a3d04e763bdc5a071c0e827c0bd834a5"}
 
-
-               //Cassandra
-    myUniValue.pushKV("",(int64_t)tx.nLockTime);
-    jsonOutput = myUniValue.write(0);
-  
-    std::cout<<"Hex ---->>>>>>Cxxxx "<<std::endl;
-    std::cout<<jsonOutput<<std::endl;
-
-    // {"":0}
 
             //Add logic to
             std::cout<<"LOGGING ScriptSig Public Key ID NOWWW --->>>"<<std::endl;
-       
+            //Setting values of scriptSigSimple
+            cass_user_type_set_string_by_name(ScriptSigSimple_type,"asm",asmvin.c_str());
+            cass_user_type_set_string_by_name(ScriptSigSimple_type,"hex",HexIn.c_str());
 
-
-
-    //        //Setting values of scriptSigSimple
-    // cass_user_type_set_string_by_name(ScriptSigSimple_type,"asm","Script asm");
-    // cass_user_type_set_string_by_name(ScriptSigSimple_type,"hex","xaesh");
-
-    // //setting values of vinTypeSimple
-    // cass_user_type_set_string_by_name(vinTypeSimple_type,"txid","xs4829ds");
-    // cass_user_type_set_string_by_name(vinTypeSimple_type,"vout","de");
-    // cass_user_type_set_string_by_name(vinTypeSimple_type,"sequence","dsf");
-    // cass_user_type_set_user_type_by_name(vinTypeSimple_type, "scriptsig", ScriptSigSimple_type);
+            //setting values of vinTypeSimple
+            cass_user_type_set_string_by_name(vinTypeSimple_type,"txid",txidvin.c_str());
+            cass_user_type_set_string_by_name(vinTypeSimple_type,"vout",voutin.c_str());
+            cass_user_type_set_user_type_by_name(vinTypeSimple_type, "scriptsig", ScriptSigSimple_type);
 
 
             in.pushKV("scriptSig", o);
@@ -600,9 +583,29 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
             }
         }
         in.pushKV("sequence", (int64_t)txin.nSequence);
+
+        //Cassandra
+        myUniValue.pushKV("",  (int64_t)txin.nSequence);
+        jsonOutput = myUniValue.write(0);
+        lastIndex = jsonOutput.size()-5;
+        std::string sequnceIN = jsonOutput.substr(4,lastIndex);
+        cass_user_type_set_string_by_name(vinTypeSimple_type,"sequence",sequnceIN.c_str());
+
         vin.push_back(in);
+        //Cassandra Code
+        //in is object
+        //we will return vinCollection
+        cass_collection_append_user_type(vinCollection,vinTypeSimple_type);
+
     }
     entry.pushKV("vin", vin);
+
+
+
+    //PREPERATION FOR VOUT
+
+    cass_user_type_set_user_type_by_name(voutTypeSimple_type, "scriptpubkey", scriptpubkey_type);
+
 
     UniValue vout(UniValue::VARR);
     for (unsigned int i = 0; i < tx.vout.size(); i++) {
@@ -611,12 +614,40 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
         UniValue out(UniValue::VOBJ);
 
         out.pushKV("value", ValueFromAmount(txout.nValue));
-        out.pushKV("n", (int64_t)i);
 
-        UniValue o(UniValue::VOBJ);
+        //Cassandra
+        myUniValue.pushKV("",ValueFromAmount(txout.nValue));
+        jsonOutput = myUniValue.write(0);
+        lastIndex = jsonOutput.size()-5;
+        std::string ValueX = jsonOutput.substr(4,lastIndex);
+
+        out.pushKV("n", (int64_t)i);
+        //Cassandra
+        myUniValue.pushKV("", (int64_t)i);
+        jsonOutput = myUniValue.write(0);
+        lastIndex = jsonOutput.size()-5;
+        std::string nx = jsonOutput.substr(4,lastIndex);
+
+
+
+        UniValue o(UniValue::VOBJ);          
         // ScriptToUniv(txout.scriptPubKey, /*out=*/o, /*include_hex=*/true, /*include_address=*/true);
-        ScriptToUnivXX(txout.scriptPubKey, /*out=*/o, /*include_hex=*/true, /*include_address=*/true);
+        struct retScriptUnivXX s2x= ScriptToUnivXX(txout.scriptPubKey, /*out=*/o, /*include_hex=*/true, /*include_address=*/true);
         out.pushKV("scriptPubKey", o);
+
+        //CASSANDRA CODE --- >>>>
+        cass_user_type_set_string_by_name(scriptpubkey_type,"asm",s2x.asmS.c_str());
+        cass_user_type_set_string_by_name(scriptpubkey_type,"des",s2x.descS.c_str());
+        cass_user_type_set_string_by_name(scriptpubkey_type,"hex",s2x.hexS.c_str());
+        cass_user_type_set_string_by_name(scriptpubkey_type,"address",s2x.addressS.c_str());
+        cass_user_type_set_string_by_name(scriptpubkey_type,"type",s2x.typeS.c_str());
+        //CASSANDRA CODE -----xxxx
+        cass_user_type_set_string_by_name(voutTypeSimple_type, "value", ValueX.c_str());
+        cass_user_type_set_string_by_name(voutTypeSimple_type, "n", nx.c_str());
+        cass_user_type_set_user_type_by_name(voutTypeSimple_type, "scriptpubkey", scriptpubkey_type);
+        cass_collection_append_user_type(collection, voutTypeSimple_type);
+
+
         vout.push_back(out);
 
         if (have_undo) {
@@ -638,7 +669,9 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
     if (include_hex) {
         entry.pushKV("hex", EncodeHexTx(tx, serialize_flags)); // The hex-encoded transaction. Used the name "hex" to be consistent with the verbose output of "getrawtransaction".
     }
-
+    
+    s1.collection=collection;
+    s1.vinCollection=vinCollection;
 
     return s1;
 
@@ -646,10 +679,10 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
 
 
 //Customised ScriptToUniv
-void ScriptToUnivAF(const CScript& script, UniValue& out, bool include_hex, bool include_address, const SigningProvider* provider)
+std::string ScriptToUnivAF(const CScript& script, UniValue& out, bool include_hex, bool include_address, const SigningProvider* provider)
 {
     CTxDestination address;
-
+std::string addrexx;
     // out.pushKV("asm", ScriptToAsmStr(script));
     // if (include_address) {
     //     out.pushKV("desc", InferDescriptor(script, provider ? *provider : DUMMY_SIGNING_PROVIDER)->ToString());
@@ -667,23 +700,72 @@ void ScriptToUnivAF(const CScript& script, UniValue& out, bool include_hex, bool
 
     if (include_address && ExtractDestination(script, address)) {
         out.pushKV("address", EncodeDestination(address));
+
+            //Cassandra
+            UniValue myUniValue(UniValue::VOBJ);
+
+            myUniValue.pushKV("",EncodeDestination(address));
+            std::string jsonOutput = myUniValue.write(0);
+            int lastIndex = jsonOutput.size()-7;
+            std::string addrexx = jsonOutput.substr(5,lastIndex);
+
+
+
+
     }
+    return addrexx;
     // out.pushKV("type", GetTxnOutputType(type));
 }
 
 
 
-//Didnt work !
-void ScriptToUnivXX(const CScript& script, UniValue& out, bool include_hex, bool include_address, const SigningProvider* provider)
+//it worked !
+struct retScriptUnivXX ScriptToUnivXX(const CScript& script, UniValue& out, bool include_hex, bool include_address, const SigningProvider* provider)
 {
     CTxDestination address;
 
+    struct retScriptUnivXX s2x;
+
     out.pushKV("asm", ScriptToAsmStr(script));
+
+
+
+    
+    
+    UniValue myUniValue(UniValue::VOBJ);
+
+
+    //Cassandra
+    myUniValue.pushKV("",ScriptToAsmStr(script));
+    std::string jsonOutput = myUniValue.write(0);
+    int lastIndex = jsonOutput.size()-7;
+    std::string asmvo = jsonOutput.substr(5,lastIndex);
+    s2x.asmS=asmvo;
+
+
+
+
     if (include_address) {
         out.pushKV("desc", InferDescriptor(script, provider ? *provider : DUMMY_SIGNING_PROVIDER)->ToString());
+        
+        //Cassandra
+        myUniValue.pushKV("", InferDescriptor(script, provider ? *provider : DUMMY_SIGNING_PROVIDER)->ToString());
+        jsonOutput = myUniValue.write(0);
+        lastIndex = jsonOutput.size()-7;
+        std::string descX = jsonOutput.substr(5,lastIndex);
+        s2x.descS=descX;
+
+
     }
     if (include_hex) {
         out.pushKV("hex", HexStr(script));
+        
+        //Cassandra
+        myUniValue.pushKV("",HexStr(script));
+        jsonOutput = myUniValue.write(0);
+        lastIndex = jsonOutput.size()-7;
+        std::string hexX = jsonOutput.substr(5,lastIndex);
+        s2x.hexS=hexX;
     }
 
     std::vector<std::vector<unsigned char>> solns;
@@ -697,6 +779,20 @@ void ScriptToUnivXX(const CScript& script, UniValue& out, bool include_hex, bool
     if (include_address && ExtractDestination(script, address)) {
         std::cout<<"Entered ExtractDestination "<<std::endl;
         out.pushKV("address", EncodeDestination(address));
+        //Cassandra
+        myUniValue.pushKV("",EncodeDestination(address));
+        jsonOutput = myUniValue.write(0);
+        lastIndex = jsonOutput.size()-7;
+        std::string hexX = jsonOutput.substr(5,lastIndex);
+        s2x.addressS=hexX;
     }
     out.pushKV("type", GetTxnOutputType(type));
+        
+        //Cassandra
+        myUniValue.pushKV("",GetTxnOutputType(type));
+        jsonOutput = myUniValue.write(0);
+        lastIndex = jsonOutput.size()-7;
+        std::string typeVo = jsonOutput.substr(5,lastIndex);
+        s2x.typeS=typeVo;
+        return s2x;
 }

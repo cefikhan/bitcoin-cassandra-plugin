@@ -39,13 +39,15 @@
 
 
  
-void OutputTxJSONx(const CTransaction& tx,CassUserType* ScriptSigSimple_type ,CassUserType* vinTypeSimple_type  )
+collectionsStruct OutputTxJSONx(const CTransaction& tx,CassUserType* ScriptSigSimple_type ,CassUserType* vinTypeSimple_type,CassUserType* scriptpubkey_type, CassUserType* voutTypeSimple_type   )
 {
     std::cout<<"OUTPUTTXJSON CALLED FROM INSIDE "<<std::endl;
     UniValue entry(UniValue::VOBJ);
-    TxToUnivXX(ScriptSigSimple_type, vinTypeSimple_type, tx, /*block_hash=*/uint256(), entry);
+    collectionsStruct s1 ;
+    s1 = TxToUnivXX(ScriptSigSimple_type, vinTypeSimple_type,scriptpubkey_type,voutTypeSimple_type, tx, /*block_hash=*/uint256(), entry);
 
 
     std::string jsonOutput = entry.write(0);
     tfm::format(std::cout, "%s\n", jsonOutput);
+    return s1;
 }

@@ -86,7 +86,7 @@ static void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& 
 
 
 
-static void TxToJSONAF(const CTransaction& tx, const uint256 hashBlock, UniValue& entry,
+std::string TxToJSONAF(const CTransaction& tx, uint32_t nx,const uint256 hashBlock, UniValue& entry,
                      Chainstate& active_chainstate, const CTxUndo* txundo = nullptr,
                      TxVerbosity verbosity = TxVerbosity::SHOW_DETAILS)
 {
@@ -96,7 +96,9 @@ static void TxToJSONAF(const CTransaction& tx, const uint256 hashBlock, UniValue
     // Blockchain contextual information (confirmations and blocktime) is not
     // available to code in bitcoin-common, so we query them here and push the
     // data into the returned UniValue.
-    TxToUnivAF(tx, /*block_hash=*/uint256(), entry, /*include_hex=*/true, RPCSerializationFlags(), txundo, verbosity);
+    std::string s;
+    s = TxToUnivAF(tx,nx ,/*block_hash=*/uint256(), entry, /*include_hex=*/true, RPCSerializationFlags(), txundo, verbosity);
+    return s;
 
     // if (!hashBlock.IsNull()) {
     //     LOCK(cs_main);
@@ -120,7 +122,7 @@ static void TxToJSONAF(const CTransaction& tx, const uint256 hashBlock, UniValue
 
 
 
-auto AFreadTransaction(uint256 AFhashx,ChainstateManager& chainman, const CTxMemPool* const mempool ){
+std::string AFreadTransaction(uint256 AFhashx,uint32_t nx,ChainstateManager& chainman, const CTxMemPool* const mempool ){
 
 
 
@@ -212,14 +214,14 @@ auto AFreadTransaction(uint256 AFhashx,ChainstateManager& chainman, const CTxMem
                 // TxToUnivXX(tx, /*block_hash=*/uint256(), entry);
                 // std::string jsonOutput = entry.write(4);
                 // tfm::format(std::cout, "%s\n", jsonOutput);
-
-                TxToJSONAF(*tx, hash_block, result, chainman.ActiveChainstate());
+                std::string s;
+                s = TxToJSONAF(*tx,nx,hash_block, result, chainman.ActiveChainstate());
                 std::string jsonOutput = result.write(4);
                 tfm::format(std::cout, "%s\n", jsonOutput);
                 // return result;
-            std::cout<<"returned after formating anything "<<std::endl;
+                std::cout<<"returned after formating anything "<<std::endl;
 
-                return;
+                return s;
             }
 
             // CBlockUndo blockUndo;
@@ -241,8 +243,10 @@ auto AFreadTransaction(uint256 AFhashx,ChainstateManager& chainman, const CTxMem
             // }
             // TxToJSON(*tx, hash_block, result, chainman.ActiveChainstate(), undoTX, TxVerbosity::SHOW_DETAILS_AND_PREVOUT);
             // return result;
-            std::cout<<"returned without anything "<<std::endl;
+            std::string s="something went wrong";
 
+            std::cout<<"returned without anything "<<std::endl;
+            return s;
 }
 
 

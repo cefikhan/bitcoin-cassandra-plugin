@@ -2567,69 +2567,10 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     CCheckQueueControl<CScriptCheck> control(fScriptChecks && parallel_script_checks ? &scriptcheckqueue : nullptr);
     std::vector<PrecomputedTransactionData> txsdata(block.vtx.size());
 
-    //CASSANDRA CODE _______------___---____----___----___-----____-----_________----___--_--_--_-___--__-__--___----___________
-
-
-
-  CassCluster* cluster = NULL;
-  CassSession* session = cass_session_new();
-  char* hosts = "127.0.0.1";
-  cluster = create_cluster(hosts);
-
-  if(connect_session(session, cluster) != CASS_OK) {
-    cass_cluster_free(cluster);
-    cass_session_free(session);
-    return -1;
-  }
-
-    //insert logic implemented here
-  CassError rc = CASS_OK;
-  CassStatement* bstatement = NULL;
-  CassFuture* future = NULL;
-
-  const CassKeyspaceMeta* bkeyspace_meta = NULL;
-
-  //for bitcoinspace 
-  const CassDataType* scriptPubKeyTypeSimple = NULL;
-  const CassDataType* voutTypeSimple = NULL;
-
-
-  const CassDataType* ScriptSigSimple = NULL;
-  const CassDataType* vinTypeSimple = NULL;
-
-
-  const char* bquery = "INSERT INTO bitcoinspace.transactionssimple (txid,version,size,vsize,weight,locktime,hex,senderAddress ,vout, vin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-
-  bstatement = cass_statement_new(bquery, 10);
-  bschema_meta = cass_session_get_schema_meta(session);
-
-//   //CassKeyspaceMeta                                  CassSchemaMeta
-     bkeyspace_meta = cass_schema_meta_keyspace_by_name(bschema_meta, "bitcoinspace");
-  if (bkeyspace_meta != NULL) {
-    scriptPubKeyTypeSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "scriptpubkeytypesimple");
-    voutTypeSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "vouttypesimple");
-
-    //User types for vinTypeSimple
-    vinTypeSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "vintypesimple");
-    ScriptSigSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "scriptsigsimple");
-  }
-
-
-    // Create a user-defined type for the scriptPubKeyTypeSimple
-    CassUserType* scriptpubkey_type = cass_user_type_new_from_data_type(scriptPubKeyTypeSimple);
-    //Create a user-defined type for voutTypeSimple
-    CassUserType* voutTypeSimple_type = cass_user_type_new_from_data_type(voutTypeSimple);
-
-
-    // Create a user-defined type for the scriptPubKeyTypeSimple
-    CassUserType* ScriptSigSimple_type = cass_user_type_new_from_data_type(ScriptSigSimple);
-    //Create a user-defined type for voutTypeSimple
-    CassUserType* vinTypeSimple_type = cass_user_type_new_from_data_type(vinTypeSimple);
-
+   
 
     //making array of voutTypeSimple for vout
-    CassCollection* collection = NULL;
+    // CassCollection* collection = NULL;
 
 
 
@@ -2686,8 +2627,77 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     int nInputs = 0;
     int64_t nSigOpsCost = 0;
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
+
+
+
+
     for (unsigned int i = 0; i < block.vtx.size(); i++)
     {
+         //CASSANDRA CODE _______------___---____----___----___-----____-----_________----___--_--_--_-___--__-__--___----___________
+
+
+
+        CassCluster* cluster = NULL;
+        CassSession* session = cass_session_new();
+        char* hosts = "127.0.0.1";
+        cluster = create_cluster(hosts);
+
+        if(connect_session(session, cluster) != CASS_OK) {
+            cass_cluster_free(cluster);
+             cass_session_free(session);
+              return -1;
+         }
+
+              //insert logic implemented here
+             CassError rc = CASS_OK;
+             CassStatement* bstatement = NULL;
+             CassFuture* future = NULL;
+
+             const CassKeyspaceMeta* bkeyspace_meta = NULL;
+
+             //for bitcoinspace 
+             const CassDataType* scriptPubKeyTypeSimple = NULL;
+             const CassDataType* voutTypeSimple = NULL;
+
+
+             const CassDataType* ScriptSigSimple = NULL;
+             const CassDataType* vinTypeSimple = NULL;
+
+
+             const char* bquery = "INSERT INTO bitcoinspace.transactionssimple (txid,version,size,vsize,weight,locktime,hex,senderAddress ,vout, vin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+
+             bstatement = cass_statement_new(bquery, 10);
+             bschema_meta = cass_session_get_schema_meta(session);
+
+           //CassKeyspaceMeta                                  CassSchemaMeta
+            bkeyspace_meta = cass_schema_meta_keyspace_by_name(bschema_meta, "bitcoinspace");
+            if (bkeyspace_meta != NULL) {
+                scriptPubKeyTypeSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "scriptpubkeytypesimple");
+                voutTypeSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "vouttypesimple");
+
+                //User types for vinTypeSimple
+                vinTypeSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "vintypesimple");
+                ScriptSigSimple = cass_keyspace_meta_user_type_by_name(bkeyspace_meta, "scriptsigsimple");
+            }
+
+
+            // Create a user-defined type for the scriptPubKeyTypeSimple
+            CassUserType* scriptpubkey_type = cass_user_type_new_from_data_type(scriptPubKeyTypeSimple);
+            //Create a user-defined type for voutTypeSimple
+            CassUserType* voutTypeSimple_type = cass_user_type_new_from_data_type(voutTypeSimple);
+
+
+             // Create a user-defined type for the scriptPubKeyTypeSimple
+            CassUserType* ScriptSigSimple_type = cass_user_type_new_from_data_type(ScriptSigSimple);
+            //Create a user-defined type for voutTypeSimple
+            CassUserType* vinTypeSimple_type = cass_user_type_new_from_data_type(vinTypeSimple);
+
+
+
+
+
+
         const CTransaction &tx = *(block.vtx[i]);
 
         
@@ -2708,32 +2718,14 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
 
 
 
-        OutputTxJSONx(tx,ScriptSigSimple_type,vinTypeSimple_type);
-
-        // callme(txhashC);
-        
+        collectionsStruct s2 =  OutputTxJSONx(tx,ScriptSigSimple_type,vinTypeSimple_type,scriptpubkey_type,voutTypeSimple_type);
     
-        // std::cout<<"Calling vtx in loop tx.ToString() for each block NOOOOOWWWW --->>><<<------"<<std::endl;
-        // std::cout<<tx.ToString()  <<std::endl;
-        // std::cout<<"Hash : ";    
-        // std::cout<< tx.GetHash().ToString()  <<std::endl;
-        // std::cout<<"Version : ";
-        // std::cout<<tx.nVersion<<std::endl;
-        // std::cout<<"Vin_size : ";
-        // std::cout<<tx.vin.size()<<std::endl;
-        // std::cout<<"Vout_size : ";
-        // std::cout<<tx.vout.size()<<std::endl;
-        // std::cout<<"lock_time : ";
-        // std::cout<<tx.nLockTime<<std::endl;
-        // std::cout<<"size : ";
-        // std::cout<<tx.GetTotalSize()<<std::endl;
-        // std::cout<<"block_height: ";
-        // std::cout<<pindex->nHeight<<std::endl;
-        // std::cout<<"Tx_index : ";
-        // std::cout<<pindex->nChainTx<<std::endl;
-        // std::cout<<"inputs : [ "<<std::endl;
-        // std::cout<<" { "<<std::endl;
-        // std::cout<<"previous outputs : "<<std::endl;
+        //MY CODE 
+        CassCollection* senderCollection = NULL;
+
+        senderCollection = cass_collection_new(CASS_COLLECTION_TYPE_LIST, 2); 
+
+
         for(unsigned int i=0;i<tx.vin.size();i++){
             std::cout<<"{"<<std::endl;
             auto& vin = tx.vin[i];
@@ -2741,85 +2733,126 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
             if(!tx.vin[i].prevout.IsNull()){
                 std::cout<<"Not a coinbase TX --->>> logging its details "<<std::endl;
                 try{                
-                AFreadTransaction(tx.vin[i].prevout.hash,m_chainman,m_mempool);
+                 std::string addressX =  AFreadTransaction(tx.vin[i].prevout.hash,tx.vin[i].prevout.n,m_chainman,m_mempool);
+                     cass_collection_append_string(senderCollection, addressX.c_str());
+
                 }
                 catch(...){
                     std::cout<<"we might be getting Univalue exception here --- >>> "<<std::endl;
                 }
 
+            }else{
+                std::string addressX = "coinbase";
+                 cass_collection_append_string(senderCollection, addressX.c_str());
             }
 
 
 
 
-        // const COutPoint& prevout = vin.prevout;
-        //const  CScript& ScriptSig = vin.scriptSig;
+
+              // const COutPoint& prevout = vin.prevout;
+            //const  CScript& ScriptSig = vin.scriptSig;
 
 
 
-        //     if(ScriptSig.IsPayToScriptHash()){
-        //         std::cout<<"IsPayToScript"<<std::endl;
-        //     }
-        //    if(ScriptSig.IsPayToWitnessScriptHash()){
-        //         std::cout<<"IsPayToWitnessScriptHash"<<std::endl;
-        //     }  
-        //     if(ScriptSig.IsPushOnly()){
-        //         std::cout<<"IsPushOnly"<<std::endl;
-        //     }
-        //     // if(!ScriptSig.IsPushOnly()){
-        //     // std::cout<<"Is Not PushOnly"<<std::endl;
-        //     CPubKey pubKeyOut;
-        //     if(ExtractPubKey(ScriptSig, pubKeyOut)){
-        //       std::cout<< pubKeyOut.GetHash().ToString()<<std::endl;
-        //       std::cout<<"Vin public keyID in vin["<<i<<"]"<<std::endl;
-        //       std::cout<<pubKeyOut.GetID().ToString()<<std::endl;
-        //   }
-        //   else{
-        //     std::cout<<"Uable to extract public key"<<std::endl;
-        //   }
+            //     if(ScriptSig.IsPayToScriptHash()){
+            //         std::cout<<"IsPayToScript"<<std::endl;
+            //     }
+            //    if(ScriptSig.IsPayToWitnessScriptHash()){
+            //         std::cout<<"IsPayToWitnessScriptHash"<<std::endl;
+            //     }  
+            //     if(ScriptSig.IsPushOnly()){
+            //         std::cout<<"IsPushOnly"<<std::endl;
+            //     }
+            //     // if(!ScriptSig.IsPushOnly()){
+            //     // std::cout<<"Is Not PushOnly"<<std::endl;
+            //     CPubKey pubKeyOut;
+            //     if(ExtractPubKey(ScriptSig, pubKeyOut)){
+            //       std::cout<< pubKeyOut.GetHash().ToString()<<std::endl;
+            //       std::cout<<"Vin public keyID in vin["<<i<<"]"<<std::endl;
+            //       std::cout<<pubKeyOut.GetID().ToString()<<std::endl;
+            //   }
+            //   else{
+            //     std::cout<<"Uable to extract public key"<<std::endl;
+            //   }
             //  }
             // if(ScriptSig.IsWitnessProgram()){
             //     std::cout<<"IsWitnessProgram"<<std::endl;
             // }
             // std::cout<<"LOGGGINNG BEFORE --->>> Vin public key Hash vin["<<i<<" ] of tx "<<tx.GetHash().ToString()<<std::endl;
             // std::cout<< pubKeyOut.GetHash().ToString()<<std::endl;
-        //   std::cout<<"FOr tx "<<tx.GetHash().ToString()<<" vin : "<<i<<std::endl;
-        //   std::cout<<tx.vin[i].ToString()<<std::endl;
+            //   std::cout<<"FOr tx "<<tx.GetHash().ToString()<<" vin : "<<i<<std::endl;
+            //   std::cout<<tx.vin[i].ToString()<<std::endl;
             // std::cout<<"Vin public key Hash vin["<<i<<" ] of tx "<<tx.GetHash().ToString()<<std::endl;
-    //    for(unsigned int i=0;i<tx.vout.size();i++){
-    //         const CTxOut& output = tx.vout[i];
-    //         const CScript scriptPubKey = output.scriptPubKey;
-    //        CPubKey *pubKeyOut = new CPubKey(scriptPubKey.begin(),scriptPubKey.end()) ;
-    //       if(ExtractPubKey(scriptSig, *pubKeyOut)){
-    //         std::cout<< pubKeyOut->GetHash().ToString()<<std::endl;
-    //         std::cout<<"Vin public keyID in vin["<<i<<"]"<<std::endl;
-    //         std::cout<<pubKeyOut->GetID().ToString()<<std::endl;
-    //       }
-    //       else{
-    //         std::cout<<"Uable to extract public key"<<std::endl;
-    //       }
-    //     }
-        //     CTxIn txin = tx.vin[i];
-        //     CScript scriptSig = txin.scriptSig;
-        //     CPubKey pubKeyOut ;
-        //   if(ExtractPubKey(scriptSig, pubKeyOut)){
-        //     std::cout<<"Vin public key Hash vin["<<i<<" ] of tx "<<tx.GetHash().ToString()<<std::endl;
-        //     std::cout<< pubKeyOut.GetHash().ToString()<<std::endl;
-        //     std::cout<<"Vin public keyID in vin["<<i<<"]"<<std::endl;
-        //     std::cout<<pubKeyOut.GetID().ToString()<<std::endl;
-        //   }
-        //   else{
-        //     std::cout<<"Uable to extract public key"<<std::endl;
-        //   }
+             //    for(unsigned int i=0;i<tx.vout.size();i++){
+            //         const CTxOut& output = tx.vout[i];
+            //         const CScript scriptPubKey = output.scriptPubKey;
+            //        CPubKey *pubKeyOut = new CPubKey(scriptPubKey.begin(),scriptPubKey.end()) ;
+            //       if(ExtractPubKey(scriptSig, *pubKeyOut)){
+            //         std::cout<< pubKeyOut->GetHash().ToString()<<std::endl;
+            //         std::cout<<"Vin public keyID in vin["<<i<<"]"<<std::endl;
+            //         std::cout<<pubKeyOut->GetID().ToString()<<std::endl;
+            //       }
+            //       else{
+            //         std::cout<<"Uable to extract public key"<<std::endl;
+            //       }
+            //     }
+                //     CTxIn txin = tx.vin[i];
+                //     CScript scriptSig = txin.scriptSig;
+                //     CPubKey pubKeyOut ;
+                //   if(ExtractPubKey(scriptSig, pubKeyOut)){
+                //     std::cout<<"Vin public key Hash vin["<<i<<" ] of tx "<<tx.GetHash().ToString()<<std::endl;
+                //     std::cout<< pubKeyOut.GetHash().ToString()<<std::endl;
+                //     std::cout<<"Vin public keyID in vin["<<i<<"]"<<std::endl;
+                //     std::cout<<pubKeyOut.GetID().ToString()<<std::endl;
+                //   }
+                //   else{
+                //     std::cout<<"Uable to extract public key"<<std::endl;
+                //   }
 
-            // std::cout<<"hash : ";
-            // std::cout<< prevout.hash.ToString() <<std::endl;
-            // std::cout<<"value : ";
-            // std::cout<<tx.GetValueOut()<<std::endl;
-            // std::cout<<"tx_index : ";
-            // std::cout<<prevout.n<<std::endl;
-            // std::cout<<"}"<<std::endl;
+                    // std::cout<<"hash : ";
+                    // std::cout<< prevout.hash.ToString() <<std::endl;
+                    // std::cout<<"value : ";
+                    // std::cout<<tx.GetValueOut()<<std::endl;
+                    // std::cout<<"tx_index : ";
+                    // std::cout<<prevout.n<<std::endl;
+                    // std::cout<<"}"<<std::endl;
         }
+
+            std::cout<<"LOGGING THE DETAILS ---- NOWWW >>>> "<<std::endl;
+            std::cout<<"Logging txhashC "<<std::endl;
+            std::cout<<txhashC<<std::endl;
+
+            std::cout<<"Logging the s2.version.c_str() ---- "<<std::endl;
+            std::cout<<s2.version.c_str()<<std::endl;
+
+            cass_statement_bind_string(bstatement, 0, txhashC);
+            cass_statement_bind_string(bstatement, 1, s2.version.c_str());
+            cass_statement_bind_string(bstatement, 2, s2.size.c_str());
+            cass_statement_bind_string(bstatement, 3, s2.vsize.c_str());
+            cass_statement_bind_string(bstatement, 4, s2.weight.c_str());
+            cass_statement_bind_string(bstatement, 5, s2.locktime.c_str());
+            cass_statement_bind_string(bstatement, 6, s2.hex.c_str());
+            cass_statement_bind_collection(bstatement, 7, senderCollection);
+            cass_statement_bind_collection(bstatement, 8, s2.collection);
+            cass_statement_bind_collection(bstatement, 9, s2.vinCollection);
+
+
+
+            future = cass_session_execute(session, bstatement);
+            cass_future_wait(future);
+
+            rc = cass_future_error_code(future);
+            if (rc != CASS_OK) {
+                print_error(future);
+            }
+
+            cass_future_free(future);
+            cass_cluster_free(cluster);
+            cass_session_free(session);
+            cass_schema_meta_free(bschema_meta);
+
+
         // std::cout<<"}"<<std::endl;
         // std::cout<<""<<std::endl;
 
@@ -2908,6 +2941,8 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         }
         UpdateCoins(tx, view, i == 0 ? undoDummy : blockundo.vtxundo.back(), pindex->nHeight);
     }
+    //BLOCK TX CODE ENDS HERE >>>>>>>
+
     const auto time_3{SteadyClock::now()};
     time_connect += time_3 - time_2;
     LogPrint(BCLog::BENCH, "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs (%.2fms/blk)]\n", (unsigned)block.vtx.size(),
@@ -2973,17 +3008,15 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     );
 
     //Cassandra code 
-//   cass_cluster_free(cluster);
-//   cass_session_free(session);
+   //   cass_cluster_free(cluster);
+  //   cass_session_free(session);
 
-//   cass_schema_meta_free(bschema_meta);
+  //   cass_schema_meta_free(bschema_meta);
   //till here
 
   
 
-  cass_cluster_free(cluster);
-  cass_session_free(session);
-  cass_schema_meta_free(bschema_meta);
+
 
 
 
