@@ -392,7 +392,7 @@ std::string TxToUnivAF(const CTransaction& tx,uint32_t nx ,const uint256& block_
 
 
 //CUSTOMIZED CODE
-struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUserType* vinTypeSimple_type , CassUserType* scriptpubkey_type, CassUserType* voutTypeSimple_type , const CTransaction& tx, const uint256& block_hash, UniValue& entry, bool include_hex, int serialize_flags, const CTxUndo* txundo, TxVerbosity verbosity)
+struct collectionsStruct TxToUnivXX(const CassDataType* ScriptSigSimple ,const CassDataType* vinTypeSimple ,const CassDataType* scriptPubKeyTypeSimple,const CassDataType* voutTypeSimple , const CTransaction& tx, const uint256& block_hash, UniValue& entry, bool include_hex, int serialize_flags, const CTxUndo* txundo, TxVerbosity verbosity)
 {
     CHECK_NONFATAL(verbosity >= TxVerbosity::SHOW_DETAILS);
 
@@ -501,9 +501,23 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
     for (unsigned int i = 0; i < tx.vin.size(); i++) {
         const CTxIn& txin = tx.vin[i];
         UniValue in(UniValue::VOBJ);
+
+
+        // Create a user-defined type for the scriptPubKeyTypeSimple
+        CassUserType* ScriptSigSimple_type = cass_user_type_new_from_data_type(ScriptSigSimple);
+        //Create a user-defined type for voutTypeSimple
+        CassUserType* vinTypeSimple_type = cass_user_type_new_from_data_type(vinTypeSimple);
+
+
+
+
+
         if (tx.IsCoinBase()) {
             in.pushKV("coinbase", HexStr(txin.scriptSig));
         } else {
+
+
+
             in.pushKV("txid", txin.prevout.hash.GetHex());
             //Cassandra
             myUniValue.pushKV("", txin.prevout.hash.GetHex());
@@ -554,6 +568,8 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
             cass_user_type_set_user_type_by_name(vinTypeSimple_type, "scriptsig", ScriptSigSimple_type);
 
 
+
+
             in.pushKV("scriptSig", o);
             // in.pushKV("scriptSigXXX", o_script_SIG_key);
         }
@@ -596,6 +612,10 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
         //in is object
         //we will return vinCollection
         cass_collection_append_user_type(vinCollection,vinTypeSimple_type);
+        //free the user types 
+
+        cass_user_type_free(ScriptSigSimple_type);
+        cass_user_type_free(vinTypeSimple_type);
 
     }
     entry.pushKV("vin", vin);
@@ -604,7 +624,6 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
 
     //PREPERATION FOR VOUT
 
-    cass_user_type_set_user_type_by_name(voutTypeSimple_type, "scriptpubkey", scriptpubkey_type);
 
 
     UniValue vout(UniValue::VARR);
@@ -635,6 +654,16 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
         struct retScriptUnivXX s2x= ScriptToUnivXX(txout.scriptPubKey, /*out=*/o, /*include_hex=*/true, /*include_address=*/true);
         out.pushKV("scriptPubKey", o);
 
+
+        // Create a user-defined type for the scriptPubKeyTypeSimple
+        CassUserType* scriptpubkey_type = cass_user_type_new_from_data_type(scriptPubKeyTypeSimple);
+        //Create a user-defined type for voutTypeSimple
+        CassUserType* voutTypeSimple_type = cass_user_type_new_from_data_type(voutTypeSimple);
+
+
+
+
+
         //CASSANDRA CODE --- >>>>
         cass_user_type_set_string_by_name(scriptpubkey_type,"asm",s2x.asmS.c_str());
         cass_user_type_set_string_by_name(scriptpubkey_type,"des",s2x.descS.c_str());
@@ -646,6 +675,13 @@ struct collectionsStruct TxToUnivXX(CassUserType* ScriptSigSimple_type ,CassUser
         cass_user_type_set_string_by_name(voutTypeSimple_type, "n", nx.c_str());
         cass_user_type_set_user_type_by_name(voutTypeSimple_type, "scriptpubkey", scriptpubkey_type);
         cass_collection_append_user_type(collection, voutTypeSimple_type);
+
+
+        cass_user_type_free(scriptpubkey_type);
+        cass_user_type_free(voutTypeSimple_type);
+        
+
+
 
 
         vout.push_back(out);

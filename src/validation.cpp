@@ -1804,6 +1804,24 @@ MempoolAcceptResult AcceptToMemoryPool(Chainstate& active_chainstate, const CTra
         for (const COutPoint& hashTx : coins_to_uncache)
             active_chainstate.CoinsTip().Uncache(hashTx);
     }
+
+    //My code 
+
+
+
+
+
+
+
+
+
+
+    
+
+    //My code  
+
+
+
     // After we've (potentially) uncached entries, ensure our coins cache is still within its size limits
     BlockValidationState state_dummy;
     active_chainstate.FlushStateToDisk(state_dummy, FlushStateMode::PERIODIC);
@@ -2628,7 +2646,16 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     int64_t nSigOpsCost = 0;
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
 
+    CassCluster* cluster = NULL;
+    CassSession* session = cass_session_new();
+    char* hosts = "127.0.0.1";
+    cluster = create_cluster(hosts);
 
+    if(connect_session(session, cluster) != CASS_OK) {
+        cass_cluster_free(cluster);
+        cass_session_free(session);
+        return -1;
+    }
 
 
     for (unsigned int i = 0; i < block.vtx.size(); i++)
@@ -2637,16 +2664,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
 
 
 
-        CassCluster* cluster = NULL;
-        CassSession* session = cass_session_new();
-        char* hosts = "127.0.0.1";
-        cluster = create_cluster(hosts);
 
-        if(connect_session(session, cluster) != CASS_OK) {
-            cass_cluster_free(cluster);
-             cass_session_free(session);
-              return -1;
-         }
 
               //insert logic implemented here
              CassError rc = CASS_OK;
@@ -2656,9 +2674,9 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
              const CassKeyspaceMeta* bkeyspace_meta = NULL;
 
              //for bitcoinspace 
-             const CassDataType* scriptPubKeyTypeSimple = NULL;
-             const CassDataType* voutTypeSimple = NULL;
-
+              const CassDataType* scriptPubKeyTypeSimple = NULL;
+              const CassDataType* voutTypeSimple = NULL;
+   
 
              const CassDataType* ScriptSigSimple = NULL;
              const CassDataType* vinTypeSimple = NULL;
@@ -2683,15 +2701,15 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
 
 
             // Create a user-defined type for the scriptPubKeyTypeSimple
-            CassUserType* scriptpubkey_type = cass_user_type_new_from_data_type(scriptPubKeyTypeSimple);
+            // CassUserType* scriptpubkey_type = cass_user_type_new_from_data_type(scriptPubKeyTypeSimple);
             //Create a user-defined type for voutTypeSimple
-            CassUserType* voutTypeSimple_type = cass_user_type_new_from_data_type(voutTypeSimple);
+            // CassUserType* voutTypeSimple_type = cass_user_type_new_from_data_type(voutTypeSimple);
 
 
-             // Create a user-defined type for the scriptPubKeyTypeSimple
-            CassUserType* ScriptSigSimple_type = cass_user_type_new_from_data_type(ScriptSigSimple);
-            //Create a user-defined type for voutTypeSimple
-            CassUserType* vinTypeSimple_type = cass_user_type_new_from_data_type(vinTypeSimple);
+            //  // Create a user-defined type for the scriptPubKeyTypeSimple
+            // CassUserType* ScriptSigSimple_type = cass_user_type_new_from_data_type(ScriptSigSimple);
+            // //Create a user-defined type for voutTypeSimple
+            // CassUserType* vinTypeSimple_type = cass_user_type_new_from_data_type(vinTypeSimple);
 
 
 
@@ -2718,7 +2736,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
 
 
 
-        collectionsStruct s2 =  OutputTxJSONx(tx,ScriptSigSimple_type,vinTypeSimple_type,scriptpubkey_type,voutTypeSimple_type);
+        collectionsStruct s2 =  OutputTxJSONx(tx,ScriptSigSimple,vinTypeSimple,scriptPubKeyTypeSimple,voutTypeSimple);
     
         //MY CODE 
         CassCollection* senderCollection = NULL;
@@ -2748,75 +2766,6 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
 
 
 
-
-
-              // const COutPoint& prevout = vin.prevout;
-            //const  CScript& ScriptSig = vin.scriptSig;
-
-
-
-            //     if(ScriptSig.IsPayToScriptHash()){
-            //         std::cout<<"IsPayToScript"<<std::endl;
-            //     }
-            //    if(ScriptSig.IsPayToWitnessScriptHash()){
-            //         std::cout<<"IsPayToWitnessScriptHash"<<std::endl;
-            //     }  
-            //     if(ScriptSig.IsPushOnly()){
-            //         std::cout<<"IsPushOnly"<<std::endl;
-            //     }
-            //     // if(!ScriptSig.IsPushOnly()){
-            //     // std::cout<<"Is Not PushOnly"<<std::endl;
-            //     CPubKey pubKeyOut;
-            //     if(ExtractPubKey(ScriptSig, pubKeyOut)){
-            //       std::cout<< pubKeyOut.GetHash().ToString()<<std::endl;
-            //       std::cout<<"Vin public keyID in vin["<<i<<"]"<<std::endl;
-            //       std::cout<<pubKeyOut.GetID().ToString()<<std::endl;
-            //   }
-            //   else{
-            //     std::cout<<"Uable to extract public key"<<std::endl;
-            //   }
-            //  }
-            // if(ScriptSig.IsWitnessProgram()){
-            //     std::cout<<"IsWitnessProgram"<<std::endl;
-            // }
-            // std::cout<<"LOGGGINNG BEFORE --->>> Vin public key Hash vin["<<i<<" ] of tx "<<tx.GetHash().ToString()<<std::endl;
-            // std::cout<< pubKeyOut.GetHash().ToString()<<std::endl;
-            //   std::cout<<"FOr tx "<<tx.GetHash().ToString()<<" vin : "<<i<<std::endl;
-            //   std::cout<<tx.vin[i].ToString()<<std::endl;
-            // std::cout<<"Vin public key Hash vin["<<i<<" ] of tx "<<tx.GetHash().ToString()<<std::endl;
-             //    for(unsigned int i=0;i<tx.vout.size();i++){
-            //         const CTxOut& output = tx.vout[i];
-            //         const CScript scriptPubKey = output.scriptPubKey;
-            //        CPubKey *pubKeyOut = new CPubKey(scriptPubKey.begin(),scriptPubKey.end()) ;
-            //       if(ExtractPubKey(scriptSig, *pubKeyOut)){
-            //         std::cout<< pubKeyOut->GetHash().ToString()<<std::endl;
-            //         std::cout<<"Vin public keyID in vin["<<i<<"]"<<std::endl;
-            //         std::cout<<pubKeyOut->GetID().ToString()<<std::endl;
-            //       }
-            //       else{
-            //         std::cout<<"Uable to extract public key"<<std::endl;
-            //       }
-            //     }
-                //     CTxIn txin = tx.vin[i];
-                //     CScript scriptSig = txin.scriptSig;
-                //     CPubKey pubKeyOut ;
-                //   if(ExtractPubKey(scriptSig, pubKeyOut)){
-                //     std::cout<<"Vin public key Hash vin["<<i<<" ] of tx "<<tx.GetHash().ToString()<<std::endl;
-                //     std::cout<< pubKeyOut.GetHash().ToString()<<std::endl;
-                //     std::cout<<"Vin public keyID in vin["<<i<<"]"<<std::endl;
-                //     std::cout<<pubKeyOut.GetID().ToString()<<std::endl;
-                //   }
-                //   else{
-                //     std::cout<<"Uable to extract public key"<<std::endl;
-                //   }
-
-                    // std::cout<<"hash : ";
-                    // std::cout<< prevout.hash.ToString() <<std::endl;
-                    // std::cout<<"value : ";
-                    // std::cout<<tx.GetValueOut()<<std::endl;
-                    // std::cout<<"tx_index : ";
-                    // std::cout<<prevout.n<<std::endl;
-                    // std::cout<<"}"<<std::endl;
         }
 
             std::cout<<"LOGGING THE DETAILS ---- NOWWW >>>> "<<std::endl;
@@ -2848,8 +2797,10 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
             }
 
             cass_future_free(future);
-            cass_cluster_free(cluster);
-            cass_session_free(session);
+
+            cass_collection_free(senderCollection);
+            cass_collection_free(s2.vinCollection);
+            cass_collection_free(s2.collection);
             cass_schema_meta_free(bschema_meta);
 
 
@@ -2941,6 +2892,10 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         }
         UpdateCoins(tx, view, i == 0 ? undoDummy : blockundo.vtxundo.back(), pindex->nHeight);
     }
+
+    cass_cluster_free(cluster);
+    cass_session_free(session);     
+
     //BLOCK TX CODE ENDS HERE >>>>>>>
 
     const auto time_3{SteadyClock::now()};
