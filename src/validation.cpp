@@ -2802,7 +2802,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
             cass_collection_free(s2.vinCollection);
             cass_collection_free(s2.collection);
             cass_schema_meta_free(bschema_meta);
-
+            cass_statement_free(bstatement);
 
         // std::cout<<"}"<<std::endl;
         // std::cout<<""<<std::endl;
